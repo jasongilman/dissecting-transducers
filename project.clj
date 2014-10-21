@@ -6,7 +6,8 @@
   
   :repositories {"sonatype-oss-public" "https://oss.sonatype.org/content/groups/public/"}
 
-  :dependencies [[org.clojure/clojure "1.7.0-master-20141010.130406-18"]]
+  :dependencies [[org.clojure/clojure "1.7.0-master-20141010.130406-18"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]]
   
   :profiles 
   {:dev {:source-paths ["dev" "src"]

@@ -1,5 +1,7 @@
 (ns dissecting-transducers.challenges
-  "This contains our hacknight challenges.")
+  "This contains our hacknight challenges."
+  (:require [clojure.core.async :as a]))
+
 
 ;; Challenge 1 - Create a reductions transducer.
 ;; reductions is an existing Clojure function. It works like reduce but returns a lazy sequence
@@ -17,11 +19,19 @@
 (defn reductions-transducer
   "f will take the last returned value and the next iteration"
   ([f]
-   ;; TODO call reductios-transducer with initial value
-   )
+   (reductions-transducer f (f)))
   ([f initial]
-   ;; TODO implement this
-   ))
+   (fn [rf]
+     (let [last-value (atom initial)]
+       (fn 
+         ([] (rf))
+         ([result] (rf result))
+         ([result input]
+          (rf result (swap! last-value f input))))))))
+
+(into [] 
+      (reductions-transducer +) 
+      (range 5))
 
 
 (comment
@@ -45,9 +55,12 @@
 
 ;; Challenge 2 - Create a parallel version of transduce
 
+
+
 (defn parallel-transduce
   [xform f init coll]
-  ;; TODO implement me
+ 
+  
   )
 
 
