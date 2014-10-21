@@ -28,6 +28,12 @@
   "Helper sorted map whose keys are sorted in the order to be printed."
   (sorted-map-by #(compare (print-order-map %1) (print-order-map %2))))
 
+(def clj-core-fn->symbol
+  "A map of all the clojure functions (the actual instances) to symbols of their names. This allows
+  pretty representations of all the clojure functions. I.E. We can show even? instead of even_QMARK_"
+  (into {} (for [[s v] (ns-publics 'clojure.core)]
+             [(var-get v) s])))
+
 (defn- displayable-value
   "Converts a value for display."
   [v]
@@ -39,17 +45,18 @@
         (assoc sorted-map-by-print-order :locals print-locals :code code))
 
       (types clojure.lang.IFn)
-      (-> v
-          type
-          .getName
-          (clojure.string/replace "$" "/")
-          (clojure.string/replace "clojure.core/" "")
-          symbol)
+      (let [symbolic-name (-> v
+                              type
+                              .getName
+                              (clojure.string/replace "$" "/")
+                              symbol)]
+        (get clj-core-fn->symbol v symbolic-name))
+
       :else
       v)))
 
 
-;; Implementation of pretty print simple dispatch for displaying transparent functions to show
+;; Implementation of pretty print simple dispatch for displaying transparent functions.
 (defmethod pprint/simple-dispatch clojure.lang.AFunction [v]
   (if (tfn? v)
     (clojure.pprint/simple-dispatch (displayable-value v))
