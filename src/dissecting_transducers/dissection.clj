@@ -1,8 +1,7 @@
 (ns dissecting-transducers.dissection)
 
-(into [] 
-      (map inc) 
-      (range 5))
+;; The example we're going to dissect:
+(into [] (map inc) (range 5))
 
 (comment
 
@@ -13,7 +12,7 @@
         to []
         xform (map inc)
         from (range 5)]
-    (transduce xform conj to from) )
+    (transduce xform conj to from))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;; What's happening inside _transduce_:
@@ -92,8 +91,7 @@
 
 ;; Transducers specific part
 ;; map is a function that returns a function. That function when called returns another function.
-;; And that innermost function has 3 different arities.
-;; We're going to break this down into
+;; And that innermost function has 3 different arities (ignoring the multiple arity version).
 (defn map_copied_from_clojure2
   [f]
   (fn [rf]
@@ -101,26 +99,11 @@
       ([] (rf))
       ([result] (rf result))
       ([result input]
-       (rf result (f input)))
-      ;; Let's ignore this arity for now.
-      ([result input & inputs]
-       (rf result (apply f input inputs))))))
+       (rf result (f input))))))
 
-;; I've come up with different names for those functions to try to make it easier to understand.
-;; The first function passed in I call the acting function. It acts on the input to modify it.
-(defn map_copied_from_clojure3
-  [acting-fn]
-  (fn [rf]
-    (fn
-      ([] (rf))
-
-      ([result] (rf result))
-
-      ([result input]
-       (rf result (acting-fn input))))))
 
 ;; inc is the acting function here
-(into [] (map inc) [1 2 3 4 5])
+(into [] (map inc) (range 5))
 
 ;; When you call (map inc) the acting function is set to increment.
 ;; This is the inner function that gets returned. I've replaced the acting function with inc
@@ -154,11 +137,11 @@
 (def inc-xref
   (map inc))
 
-(def doubler-xref
-  (map #(* % 2)))
-
 (def keep-even-xref
   (filter even?))
+
+(def doubler-xref
+  (map #(* % 2)))
 
 
 (into []
@@ -170,9 +153,21 @@
 
 ;; What's going on here?
 
+(defn separator
+  []
+  (fn [rf]
+    (println "Creating separator reducing function")
+    (fn
+      ([] (rf))
+      ([result] (rf result))
+      ([result input]
+       (println "----------------------------------")
+       (rf result input)))))
+
 (defn inspector-gadget
   [msg-prefix]
   (fn [rf]
+    (println "Creating inspector reducing function for" msg-prefix)
     (fn
       ([] (rf))
       ([result] (rf result))
@@ -182,13 +177,14 @@
 
 (into []
       (comp
+        (separator)
         (inspector-gadget "initial input:")
         inc-xref
         (inspector-gadget "after inc:")
         keep-even-xref
         (inspector-gadget "after even:")
         doubler-xref
-        (inspector-gadget "end:"))
+        (inspector-gadget "after double:"))
       [1 2 3])
 
 

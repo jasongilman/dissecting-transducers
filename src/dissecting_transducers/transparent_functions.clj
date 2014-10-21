@@ -1,6 +1,21 @@
 (ns dissecting-transducers.transparent-functions
-  (:require [clojure.pprint :as pprint]
+  (:require [clojure.pprint :as p :refer [pprint]]
             [clojure.string :as str]))
+
+(comment
+  
+  ;; Example
+  (defn create-multiprinter
+    [x]
+    (tfn [msg]
+         (dotimes [n x]
+           (println msg))))
+  
+  ((create-multiprinter 3) "hello")
+  
+  (pprint (create-multiprinter 3))
+  
+)
 
 (defmacro tfn
   "Creates a function with additional metadata including the local variables names and values that
@@ -62,7 +77,7 @@
 
 
 ;; Implementation of pretty print simple dispatch for displaying transparent functions.
-(defmethod pprint/simple-dispatch clojure.lang.AFunction [v]
+(defmethod p/simple-dispatch clojure.lang.AFunction [v]
   (if (tfn? v)
-    (clojure.pprint/simple-dispatch (displayable-value v))
+    (p/simple-dispatch (displayable-value v))
     (pr v)))
