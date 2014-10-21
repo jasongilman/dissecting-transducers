@@ -28,11 +28,21 @@
   "Helper sorted map whose keys are sorted in the order to be printed."
   (sorted-map-by #(compare (print-order-map %1) (print-order-map %2))))
 
-(def clj-core-fn->symbol
+(def ^:private clj-core-fn->symbol
   "A map of all the clojure functions (the actual instances) to symbols of their names. This allows
   pretty representations of all the clojure functions. I.E. We can show even? instead of even_QMARK_"
   (into {} (for [[s v] (ns-publics 'clojure.core)]
              [(var-get v) s])))
+
+(defn- fn->symbolic-name
+  "Returns the name of the function as a symbol"
+  [f]
+  (let [symbolic-name (-> f
+                          type
+                          .getName
+                          (clojure.string/replace "$" "/")
+                          symbol)]
+    (get clj-core-fn->symbol f symbolic-name)))
 
 (defn- displayable-value
   "Converts a value for display."
@@ -45,12 +55,7 @@
         (assoc sorted-map-by-print-order :locals print-locals :code code))
 
       (types clojure.lang.IFn)
-      (let [symbolic-name (-> v
-                              type
-                              .getName
-                              (clojure.string/replace "$" "/")
-                              symbol)]
-        (get clj-core-fn->symbol v symbolic-name))
+      (fn->symbolic-name v)
 
       :else
       v)))
